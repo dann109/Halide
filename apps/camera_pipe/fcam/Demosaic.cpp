@@ -19,6 +19,12 @@ void makeLUT(float contrast, int blackLevel, int whiteLevel, float gamma, unsign
     unsigned short minRaw = 0 + blackLevel; //f.platform().minRawValue()+blackLevel;
     unsigned short maxRaw = whiteLevel; //f.platform().maxRawValue();
 
+    // gamma is nonlinear relationship between pixel value and luminance
+    // contrast is max value of a pixel minus min value of a pixel in a matrix
+    // blackLevel is the level of brightness of the darkest (black) part of a visual image (possibly no light emitted)
+    // blackLevel is a luminance level when black is dislpayed
+    // whiteLevel is is a luminance level when white is diplayed
+    
     for (int i = 0; i <= whiteLevel; i++) {
         lut[i] = 0;
     }
