@@ -25,8 +25,8 @@ void makeLUT(float contrast, int blackLevel, int whiteLevel, float gamma, unsign
     // blackLevel is a luminance level when black is dislpayed
     // whiteLevel is is a luminance level when white is diplayed
     
-    for (int i = 0; i <= whiteLevel; i++) {
-        lut[i] = 0;
+    for (int i = 0; i <= whiteLevel; i++) {  // setting specific locations in lut array to 0 corresponding to locations
+        lut[i] = 0;                         // of white in the image.
     }
 
     float invRange = 1.0f/(maxRaw - minRaw);
@@ -36,9 +36,11 @@ void makeLUT(float contrast, int blackLevel, int whiteLevel, float gamma, unsign
         // Get a linear luminance in the range 0-1
         float y = (i-minRaw)*invRange;
         // Gamma correct it
-        y = powf(y, 1.0f/gamma);
+        y = powf(y, 1.0f/gamma); // computes first input raised to the power of second input
         // Apply a piecewise quadratic contrast curve
-        if (y > 0.5) {
+        
+        // I have no idea what this does.
+        if (y > 0.5) {  
             y = 1-y;
             y = a*y*y + b*y;
             y = 1-y;
@@ -78,17 +80,20 @@ inline short max(short a, short b) {return a>b ? a : b;}
 inline short max(short a, short b, short c, short d) {return max(max(a, b), max(c, d));}
 inline short min(short a, short b) {return a<b ? a : b;}
 
+    // inetrpolation function
 void demosaic(Halide::Runtime::Buffer<uint16_t> input, Halide::Runtime::Buffer<uint8_t> out, float colorTemp, float contrast, bool denoise, int blackLevel, int whiteLevel, float gamma) {
     const int BLOCK_WIDTH = 40;
     const int BLOCK_HEIGHT = 24;
     const int G = 0, GR = 0, R = 1, B = 2, GB = 3;
 
+    // determining parameters of raw image
     int rawWidth = input.width();
     int rawHeight = input.height();
     int outWidth = rawWidth-32;
     int outHeight = rawHeight-48;
-    outWidth = min(outWidth, out.width());
-    outHeight = min(outHeight, out.height());
+    outWidth = min(outWidth, out.width()); // this is clamping outWidth to never be more that out.Width()
+    outHeight = min(outHeight, out.height()); // clamping
+    // lost me here. doesn't this erase the values just placed into outWidth and outHeight?
     outWidth /= BLOCK_WIDTH;
     outWidth *= BLOCK_WIDTH;
     outHeight /= BLOCK_HEIGHT;
