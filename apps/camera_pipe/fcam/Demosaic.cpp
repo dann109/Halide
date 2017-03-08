@@ -29,7 +29,7 @@ void makeLUT(float contrast, int blackLevel, int whiteLevel, float gamma, unsign
         lut[i] = 0;                         // of white in the image.
     }
 
-    float invRange = 1.0f/(maxRaw - minRaw);
+    float invRange = 1.0f/(maxRaw - minRaw); // The maximum minus the minimum value of all pixels
     float b = 2 - powf(2.0f, contrast/100.0f);
     float a = 2 - 2*b;
     for (int i = minRaw+1; i <= maxRaw; i++) {
@@ -39,7 +39,7 @@ void makeLUT(float contrast, int blackLevel, int whiteLevel, float gamma, unsign
         y = powf(y, 1.0f/gamma); // computes first input raised to the power of second input
         // Apply a piecewise quadratic contrast curve
         
-        // I have no idea what this does.
+        // I have no idea what this does.???????????????????????????????????????????
         if (y > 0.5) {  
             y = 1-y;
             y = a*y*y + b*y;
@@ -56,7 +56,7 @@ void makeLUT(float contrast, int blackLevel, int whiteLevel, float gamma, unsign
 }
 
 // From the Halide camera_pipe's color_correct
-void makeColorMatrix(float colorMatrix[], float colorTemp) {
+void makeColorMatrix(float colorMatrix[], float colorTemp) { // I don't know how this works
     float alpha = (1.0 / colorTemp - 1.0/3200) / (1.0/7000 - 1.0/3200);
 
     colorMatrix[0] = alpha*1.6697f     + (1-alpha)*2.2997f;
@@ -77,13 +77,13 @@ void makeColorMatrix(float colorMatrix[], float colorTemp) {
 
 // Some functions used by demosaic
 inline short max(short a, short b) {return a>b ? a : b;}
-inline short max(short a, short b, short c, short d) {return max(max(a, b), max(c, d));}
+inline short max(short a, short b, short c, short d) {return max(max(a, b), max(c, d));} // I like this line. Makes use of previous line.
 inline short min(short a, short b) {return a<b ? a : b;}
 
     // inetrpolation function
 void demosaic(Halide::Runtime::Buffer<uint16_t> input, Halide::Runtime::Buffer<uint8_t> out, float colorTemp, float contrast, bool denoise, int blackLevel, int whiteLevel, float gamma) {
     const int BLOCK_WIDTH = 40;
-    const int BLOCK_HEIGHT = 24;
+    const int BLOCK_HEIGHT = 24; // why 40 and 24?
     const int G = 0, GR = 0, R = 1, B = 2, GB = 3;
 
     // determining parameters of raw image
@@ -93,19 +93,18 @@ void demosaic(Halide::Runtime::Buffer<uint16_t> input, Halide::Runtime::Buffer<u
     int outHeight = rawHeight-48;
     outWidth = min(outWidth, out.width()); // this is clamping outWidth to never be more that out.Width()
     outHeight = min(outHeight, out.height()); // clamping
-    // lost me here. doesn't this erase the values just placed into outWidth and outHeight?
-    outWidth /= BLOCK_WIDTH;
+    outWidth /= BLOCK_WIDTH; // is this a way of turning outWidth and outHeight into a multiple of 2?
     outWidth *= BLOCK_WIDTH;
     outHeight /= BLOCK_HEIGHT;
     outHeight *= BLOCK_HEIGHT;
 
     // Prepare the lookup table
-    unsigned char lut[whiteLevel+1];
+    unsigned char lut[whiteLevel+1]; // declare size of lut
     makeLUT(contrast, blackLevel, whiteLevel, gamma, lut);
 
     // Grab the color matrix
     float colorMatrix[12];
-    makeColorMatrix(colorMatrix, colorTemp);
+    (colorMatrix, colorTemp);
 
     //#pragma omp parallel for
     for (int by = 0; by < outHeight; by += BLOCK_HEIGHT) {
@@ -117,8 +116,8 @@ void demosaic(Halide::Runtime::Buffer<uint16_t> input, Halide::Runtime::Buffer<u
 
             for (int y = 0; y < BLOCK_HEIGHT/2+4; y++) {
                 for (int x = 0; x < BLOCK_WIDTH/2+4; x++) {
-                    inBlock[GR][y][x] = input(bx + 2*x,   by + 2*y);
-                    inBlock[R][y][x] =  input(bx + 2*x+1, by + 2*y);
+                    inBlock[GR][y][x] = input(bx + 2*x,   by + 2*y); // why is there GB and GR?????????????
+                    inBlock[R][y][x] =  input(bx + 2*x+1, by + 2*y); // is it becase its a sheet of green/blue and green/red?
                     inBlock[B][y][x] =  input(bx + 2*x,   by + 2*y+1);
                     inBlock[GB][y][x] = input(bx + 2*x+1, by + 2*y+1);
                 }
@@ -138,10 +137,10 @@ void demosaic(Halide::Runtime::Buffer<uint16_t> input, Halide::Runtime::Buffer<u
 
             */
 
-            if (denoise) {
+            if (denoise) {  // choose the max of surrounding pixels and compare with pixel of interest and choose min
                 for (int y = 1; y < BLOCK_HEIGHT/2+3; y++) {
                     for (int x = 1; x < BLOCK_WIDTH/2+3; x++) {
-                        linear[G][GR][y][x] = min(inBlock[GR][y][x],
+                        linear[G][GR][y][x] = min(inBlock[GR][y][x], // what does linear do????????????????
                                                   max(inBlock[GR][y-1][x],
                                                       inBlock[GR][y+1][x],
                                                       inBlock[GR][y][x+1],
@@ -163,7 +162,7 @@ void demosaic(Halide::Runtime::Buffer<uint16_t> input, Halide::Runtime::Buffer<u
                                                       inBlock[GB][y][x-1]));
                     }
                 }
-            } else {
+            } else { // othwerwise just transfer data to linear
                 for (int y = 1; y < BLOCK_HEIGHT/2+3; y++) {
                     for (int x = 1; x < BLOCK_WIDTH/2+3; x++) {
                         linear[G][GR][y][x] = inBlock[GR][y][x];
