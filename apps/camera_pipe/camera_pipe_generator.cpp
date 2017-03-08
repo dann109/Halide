@@ -56,7 +56,7 @@ Func CameraPipe::hot_pixel_suppression(Func input) {
 
 Func CameraPipe::interleave_x(Func a, Func b) {
     Func out;
-    out(x, y) = select((x%2)==0, a(x/2, y), b(x/2, y));
+    out(x, y) = select((x%2)==0, a(x/2, y), b(x/2, y)); // does select act as ternary/case statement?
     return out;
 }
 
